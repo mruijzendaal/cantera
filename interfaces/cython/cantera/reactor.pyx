@@ -1249,6 +1249,16 @@ cdef class FlowDevice(ConnectorNode):
         def __get__(self):
             return self.dev.massFlowRate()
 
+    def outlet_species_mass_flow_rate(self, k):
+        """
+        Get outlet species mass flow rate [kg/s] for species ``k``.
+
+        ``k`` may be either a species index or species name in the downstream phase.
+        """
+        if isinstance(k, str):
+            k = self.downstream.thermo.species_index(k)
+        return self.dev.outletSpeciesMassFlowRate(k)
+
     @property
     def pressure_function(self):
         r"""

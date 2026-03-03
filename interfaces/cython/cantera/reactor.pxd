@@ -135,6 +135,7 @@ cdef extern from "cantera/zerodim.h" namespace "Cantera":
         CxxFlowDevice() except +translate_exception
         double massFlowRate() except +translate_exception
         double massFlowRate(double) except +translate_exception
+        double outletSpeciesMassFlowRate(size_t) except +translate_exception
         double evalPressureFunction() except +translate_exception
         void setPressureFunction(shared_ptr[CxxFunc1]) except +translate_exception
         double evalTimeFunction() except +translate_exception

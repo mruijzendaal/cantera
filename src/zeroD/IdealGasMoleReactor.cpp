@@ -158,22 +158,20 @@ void IdealGasMoleReactor::eval(double time, double* LHS, double* RHS)
 
     // add terms for outlets
     for (auto outlet : m_outlet) {
+        mcvdTdt += outlet->enthalpyFlowRateInto(*this);
         for (size_t n = 0; n < m_nsp; n++) {
-            // flow of species into system and dilution by other species
-            dndt[n] -= outlet->outletSpeciesMassFlowRate(n) * imw[n];
+            double mdot_spec = outlet->speciesMassFlowRateInto(n, *this);
+            dndt[n] += mdot_spec * imw[n];
+            mcvdTdt -= m_uk[n] * imw[n] * mdot_spec;
         }
-        double mdot = outlet->massFlowRate();
-        mcvdTdt -= mdot * m_pressure * m_vol / m_mass; // flow work
     }
 
     // add terms for inlets
     for (auto inlet : m_inlet) {
-        double mdot = inlet->massFlowRate();
-        mcvdTdt += inlet->enthalpy_mass() * mdot;
+        mcvdTdt += inlet->enthalpyFlowRateInto(*this);
         for (size_t n = 0; n < m_nsp; n++) {
-            double mdot_spec = inlet->outletSpeciesMassFlowRate(n);
-            // flow of species into system and dilution by other species
-            dndt[n] += inlet->outletSpeciesMassFlowRate(n) * imw[n];
+            double mdot_spec = inlet->speciesMassFlowRateInto(n, *this);
+            dndt[n] += mdot_spec * imw[n];
             mcvdTdt -= m_uk[n] * imw[n] * mdot_spec;
         }
     }

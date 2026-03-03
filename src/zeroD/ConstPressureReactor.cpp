@@ -94,21 +94,24 @@ void ConstPressureReactor::eval(double time, double* LHS, double* RHS)
 
     // add terms for outlets
     for (auto outlet : m_outlet) {
-        double mdot = outlet->massFlowRate();
-        dmdt -= mdot;
-        dHdt -= mdot * m_enthalpy;
+        double mdot = outlet->massFlowRateInto(*this);
+        dmdt += mdot;
+        for (size_t n = 0; n < m_nsp; n++) {
+            double mdot_spec = outlet->speciesMassFlowRateInto(n, *this);
+            mdYdt[n] += mdot_spec - mdot * Y[n];
+        }
+        dHdt += outlet->enthalpyFlowRateInto(*this);
     }
 
     // add terms for inlets
     for (auto inlet : m_inlet) {
-        double mdot = inlet->massFlowRate();
-        dmdt += mdot; // mass flow into system
+        double mdot = inlet->massFlowRateInto(*this);
+        dmdt += mdot;
         for (size_t n = 0; n < m_nsp; n++) {
-            double mdot_spec = inlet->outletSpeciesMassFlowRate(n);
-            // flow of species into system and dilution by other species
+            double mdot_spec = inlet->speciesMassFlowRateInto(n, *this);
             mdYdt[n] += mdot_spec - mdot * Y[n];
         }
-        dHdt += mdot * inlet->enthalpy_mass();
+        dHdt += inlet->enthalpyFlowRateInto(*this);
     }
 
     if (m_energy) {

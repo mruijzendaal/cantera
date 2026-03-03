@@ -258,24 +258,27 @@ void Reactor::eval(double time, double* LHS, double* RHS)
 
     // add terms for outlets
     for (auto outlet : m_outlet) {
-        double mdot = outlet->massFlowRate();
-        dmdt -= mdot; // mass flow out of system
+        double mdot = outlet->massFlowRateInto(*this);
+        dmdt += mdot;
+        for (size_t n = 0; n < m_nsp; n++) {
+            double mdot_spec = outlet->speciesMassFlowRateInto(n, *this);
+            mdYdt[n] += (mdot_spec - mdot * Y[n]);
+        }
         if (m_energy) {
-            RHS[2] -= mdot * m_enthalpy;
+            RHS[2] += outlet->enthalpyFlowRateInto(*this);
         }
     }
 
     // add terms for inlets
     for (auto inlet : m_inlet) {
-        double mdot = inlet->massFlowRate();
-        dmdt += mdot; // mass flow into system
+        double mdot = inlet->massFlowRateInto(*this);
+        dmdt += mdot;
         for (size_t n = 0; n < m_nsp; n++) {
-            double mdot_spec = inlet->outletSpeciesMassFlowRate(n);
-            // flow of species into system and dilution by other species
+            double mdot_spec = inlet->speciesMassFlowRateInto(n, *this);
             mdYdt[n] += (mdot_spec - mdot * Y[n]);
         }
         if (m_energy) {
-            RHS[2] += mdot * inlet->enthalpy_mass();
+            RHS[2] += inlet->enthalpyFlowRateInto(*this);
         }
     }
 }

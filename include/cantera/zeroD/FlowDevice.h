@@ -71,7 +71,23 @@ public:
 
     //! Mass flow rate (kg/s) of outlet species k. Returns zero if this species
     //! is not present in the upstream mixture.
-    double outletSpeciesMassFlowRate(size_t k);
+    virtual double outletSpeciesMassFlowRate(size_t k);
+
+    //! Net mass flow rate into a specified reactor [kg/s].
+    //! Positive values denote flow into the specified reactor.
+    virtual double massFlowRateInto(const ReactorBase& reactor);
+
+    //! Species mass flow rate into a specified reactor [kg/s].
+    //! Positive values denote flow into the specified reactor.
+    virtual double speciesMassFlowRateInto(size_t k, const ReactorBase& reactor);
+
+    //! Enthalpy flow rate into a specified reactor [W].
+    //! Positive values denote flow into the specified reactor.
+    //! @since New in %Cantera 3.3.
+    virtual double enthalpyFlowRateInto(const ReactorBase& reactor);
+
+    //! Specific enthalpy [J/kg] associated with mass flowing into a reactor.
+    virtual double enthalpyInto(const ReactorBase& reactor);
 
     //! specific enthalpy
     double enthalpy_mass();

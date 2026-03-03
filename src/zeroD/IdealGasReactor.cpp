@@ -106,23 +106,24 @@ void IdealGasReactor::eval(double time, double* LHS, double* RHS)
 
     // add terms for outlets
     for (auto outlet : m_outlet) {
-        double mdot = outlet->massFlowRate();
-        dmdt -= mdot; // mass flow out of system
-        mcvdTdt -= mdot * m_pressure * m_vol / m_mass; // flow work
+        double mdot = outlet->massFlowRateInto(*this);
+        dmdt += mdot;
+        mcvdTdt += outlet->enthalpyFlowRateInto(*this);
+        for (size_t n = 0; n < m_nsp; n++) {
+            double mdot_spec = outlet->speciesMassFlowRateInto(n, *this);
+            mdYdt[n] += mdot_spec - mdot * Y[n];
+            mcvdTdt -= m_uk[n] / mw[n] * mdot_spec;
+        }
     }
 
     // add terms for inlets
     for (auto inlet : m_inlet) {
-        double mdot = inlet->massFlowRate();
-        dmdt += mdot; // mass flow into system
-        mcvdTdt += inlet->enthalpy_mass() * mdot;
+        double mdot = inlet->massFlowRateInto(*this);
+        dmdt += mdot;
+        mcvdTdt += inlet->enthalpyFlowRateInto(*this);
         for (size_t n = 0; n < m_nsp; n++) {
-            double mdot_spec = inlet->outletSpeciesMassFlowRate(n);
-            // flow of species into system and dilution by other species
+            double mdot_spec = inlet->speciesMassFlowRateInto(n, *this);
             mdYdt[n] += mdot_spec - mdot * Y[n];
-
-            // In combination with h_in*mdot_in, flow work plus thermal
-            // energy carried with the species
             mcvdTdt -= m_uk[n] / mw[n] * mdot_spec;
         }
     }

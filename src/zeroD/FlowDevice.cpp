@@ -124,6 +124,64 @@ double FlowDevice::outletSpeciesMassFlowRate(size_t k)
     return m_mdot * m_in->massFraction(ki);
 }
 
+double FlowDevice::massFlowRateInto(const ReactorBase& reactor)
+{
+    if (&reactor == m_out) {
+        return m_mdot;
+    }
+    if (&reactor == m_in) {
+        return -m_mdot;
+    }
+    throw CanteraError("FlowDevice::massFlowRateInto",
+                       "Reactor '{}' is not connected to this flow device.",
+                       reactor.name());
+}
+
+double FlowDevice::speciesMassFlowRateInto(size_t k, const ReactorBase& reactor)
+{
+    if (&reactor == m_out) {
+        return outletSpeciesMassFlowRate(k);
+    }
+    if (&reactor == m_in) {
+        if (k >= m_nspin) {
+            return 0.0;
+        }
+        size_t ko = m_in2out[k];
+        if (ko == npos) {
+            return 0.0;
+        }
+        return -outletSpeciesMassFlowRate(ko);
+    }
+    throw CanteraError("FlowDevice::speciesMassFlowRateInto",
+                       "Reactor '{}' is not connected to this flow device.",
+                       reactor.name());
+}
+
+double FlowDevice::enthalpyFlowRateInto(const ReactorBase& reactor)
+{
+    return massFlowRateInto(reactor) * enthalpyInto(reactor);
+}
+
+double FlowDevice::enthalpyInto(const ReactorBase& reactor)
+{
+    double mdot = massFlowRateInto(reactor);
+    if (&reactor == m_out) {
+        if (mdot >= 0.0) {
+            return m_in->enthalpy_mass();
+        }
+        return m_out->enthalpy_mass();
+    }
+    if (&reactor == m_in) {
+        if (mdot >= 0.0) {
+            return m_out->enthalpy_mass();
+        }
+        return m_in->enthalpy_mass();
+    }
+    throw CanteraError("FlowDevice::enthalpyInto",
+                       "Reactor '{}' is not connected to this flow device.",
+                       reactor.name());
+}
+
 double FlowDevice::enthalpy_mass()
 {
     return m_in->enthalpy_mass();

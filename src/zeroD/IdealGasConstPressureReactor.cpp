@@ -107,17 +107,23 @@ void IdealGasConstPressureReactor::eval(double time, double* LHS, double* RHS)
 
     // add terms for outlets
     for (auto outlet : m_outlet) {
-        dmdt -= outlet->massFlowRate(); // mass flow out of system
+        double mdot = outlet->massFlowRateInto(*this);
+        dmdt += mdot;
+        mcpdTdt += outlet->enthalpyFlowRateInto(*this);
+        for (size_t n = 0; n < m_nsp; n++) {
+            double mdot_spec = outlet->speciesMassFlowRateInto(n, *this);
+            mdYdt[n] += mdot_spec - mdot * Y[n];
+            mcpdTdt -= m_hk[n] / mw[n] * mdot_spec;
+        }
     }
 
     // add terms for inlets
     for (auto inlet : m_inlet) {
-        double mdot = inlet->massFlowRate();
-        dmdt += mdot; // mass flow into system
-        mcpdTdt += inlet->enthalpy_mass() * mdot;
+        double mdot = inlet->massFlowRateInto(*this);
+        dmdt += mdot;
+        mcpdTdt += inlet->enthalpyFlowRateInto(*this);
         for (size_t n = 0; n < m_nsp; n++) {
-            double mdot_spec = inlet->outletSpeciesMassFlowRate(n);
-            // flow of species into system and dilution by other species
+            double mdot_spec = inlet->speciesMassFlowRateInto(n, *this);
             mdYdt[n] += mdot_spec - mdot * Y[n];
             mcpdTdt -= m_hk[n] / mw[n] * mdot_spec;
         }

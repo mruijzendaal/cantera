@@ -83,20 +83,20 @@ void ConstPressureMoleReactor::eval(double time, double* LHS, double* RHS)
     // add terms for outlets
     for (auto outlet : m_outlet) {
         // determine enthalpy contribution
-        dHdt -= outlet->massFlowRate() * m_enthalpy;
+        dHdt += outlet->enthalpyFlowRateInto(*this);
         // flow of species into system and dilution by other species
         for (size_t n = 0; n < m_nsp; n++) {
-            dndt[n] -= outlet->outletSpeciesMassFlowRate(n) * imw[n];
+            dndt[n] += outlet->speciesMassFlowRateInto(n, *this) * imw[n];
         }
     }
 
     // add terms for inlets
     for (auto inlet : m_inlet) {
         // enthalpy contribution from inlets
-        dHdt += inlet->enthalpy_mass() * inlet->massFlowRate();
+        dHdt += inlet->enthalpyFlowRateInto(*this);
         // flow of species into system and dilution by other species
         for (size_t n = 0; n < m_nsp; n++) {
-            dndt[n] += inlet->outletSpeciesMassFlowRate(n) * imw[n];
+            dndt[n] += inlet->speciesMassFlowRateInto(n, *this) * imw[n];
         }
     }
 

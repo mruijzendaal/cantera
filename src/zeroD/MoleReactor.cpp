@@ -256,26 +256,21 @@ void MoleReactor::eval(double time, double* LHS, double* RHS)
 
     // add terms for outlets
     for (auto outlet : m_outlet) {
-        // flow of species into system and dilution by other species
         for (size_t n = 0; n < m_nsp; n++) {
-            dndt[n] -= outlet->outletSpeciesMassFlowRate(n) * imw[n];
+            dndt[n] += outlet->speciesMassFlowRateInto(n, *this) * imw[n];
         }
-        // energy update based on mass flow
-        double mdot = outlet->massFlowRate();
         if (m_energy) {
-            RHS[0] -= mdot * m_enthalpy;
+            RHS[0] += outlet->enthalpyFlowRateInto(*this);
         }
     }
 
     // add terms for inlets
     for (auto inlet : m_inlet) {
-        double mdot = inlet->massFlowRate();
         for (size_t n = 0; n < m_nsp; n++) {
-            // flow of species into system and dilution by other species
-            dndt[n] += inlet->outletSpeciesMassFlowRate(n) * imw[n];
+            dndt[n] += inlet->speciesMassFlowRateInto(n, *this) * imw[n];
         }
         if (m_energy) {
-            RHS[0] += mdot * inlet->enthalpy_mass();
+            RHS[0] += inlet->enthalpyFlowRateInto(*this);
         }
     }
 }
